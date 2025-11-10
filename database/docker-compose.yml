@@ -1,0 +1,28 @@
+version: "3.9"
+
+services:
+  mariadb:
+    image: mariadb:11.4
+    container_name: nari_mariadb
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # Fallbacks if .env is missing; override in .env
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:-rootpass}
+      MARIADB_DATABASE: ${MARIADB_DATABASE:-nari}
+      MARIADB_USER: ${MARIADB_USER:-nari_user}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD:-secret}
+    ports:
+      - "3306:3306"
+    volumes:
+      - nari_db:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  nari_db:
